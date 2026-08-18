@@ -8,7 +8,9 @@ class OrderExtractor:
         patterns = [
             r'(ORD-\d+)',
             r'Order\s*ID\s*[:\-]?\s*([A-Za-z0-9\-_]+)',
-            r'(?:Purchase\s*)?Order\s*(?:No\.?|#)\s*[:\-]?\s*([A-Za-z0-9\-_]+)'
+            r'(?:Purchase\s*)?Order\s*(?:No\.?|#)\s*[:\-]?\s*([A-Za-z0-9\-_]+)',
+            # Aggressive fallback for Meesho/Valmo 15+ digit order IDs (e.g. 229212028353753728_1)
+            r'\b(\d{15,}(?:_\d+)?)\b'
         ]
         for pattern in patterns:
             match = re.search(pattern, raw_text, re.IGNORECASE)
