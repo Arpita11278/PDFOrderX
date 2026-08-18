@@ -4,11 +4,11 @@ class OrderExtractor:
     @staticmethod
     def extract_order_id(raw_text: str):
         reasons = []
-        # Match 'ORD-100001', 'Order ID: 12345', 'Order # 12345'
+        # Match 'ORD-100001', 'Order ID: 12345', 'Order No. 12345', 'Purchase Order No. 12345'
         patterns = [
             r'(ORD-\d+)',
-            r'Order\s*ID\s*[:\-]?\s*([A-Za-z0-9\-]+)',
-            r'Order\s*#?\s*[:\-]?\s*([A-Za-z0-9\-]+)'
+            r'Order\s*ID\s*[:\-]?\s*([A-Za-z0-9\-_]+)',
+            r'(?:Purchase\s*)?Order\s*(?:No\.?|#)\s*[:\-]?\s*([A-Za-z0-9\-_]+)'
         ]
         for pattern in patterns:
             match = re.search(pattern, raw_text, re.IGNORECASE)
