@@ -33,7 +33,12 @@ class PDFReader:
                 return ""
                 
             page = doc[page_num]
-            text = page.get_text("text")
+            # Use "words" instead of "text" to avoid words squishing together when spaces are missing in PDF
+            words = page.get_text("words")
+            if words:
+                text = " ".join([w[4] for w in words])
+            else:
+                text = page.get_text("text")
             doc.close()
             return text
         except Exception as e:

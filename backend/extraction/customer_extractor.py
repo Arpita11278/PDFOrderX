@@ -8,7 +8,7 @@ class CustomerExtractor:
         reasons = []
         # Common patterns for shipping/customer names
         patterns = [
-            r"(?:Ship To:|Customer Name:|Consignee:)\s*([A-Za-z\s]+)",
+            r"(?:Ship To:|Customer Name:|Consignee:|Customer Address:?)\s*([A-Za-z\s]+)",
             r"Buyer:\s*([A-Za-z\s]+)"
         ]
         
