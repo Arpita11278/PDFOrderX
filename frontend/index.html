@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDFOrderX - Minimalist Extractor</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface: #1e1e1e;
+            --border: #333333;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent: #555555;
+            --accent-hover: #777777;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            padding: 40px;
+            box-sizing: border-box;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0 0 10px 0;
+            letter-spacing: -0.5px;
+        }
+
+        p.subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .drop-zone {
+            border: 1px dashed var(--border);
+            background-color: var(--bg-color);
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 20px;
+        }
+
+        .drop-zone:hover {
+            border-color: var(--accent-hover);
+        }
+
+        .drop-zone.dragover {
+            border-color: var(--text-primary);
+            background-color: #1a1a1a;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background-color: var(--accent);
+            color: var(--text-primary);
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn:disabled {
+            background-color: var(--border);
+            color: var(--text-secondary);
+            cursor: not-allowed;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border);
+            margin-top: 10px;
+        }
+
+        .btn-outline:hover {
+            background-color: var(--border);
+        }
+
+        .status-area {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border);
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--text-secondary);
+            min-height: 20px;
+            display: none;
+        }
+        
+        .loader {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid var(--text-secondary);
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .file-name-display {
+            font-size: 13px;
+            color: var(--text-primary);
+            margin-top: 10px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>PDFOrderX</h1>
+        <p class="subtitle">Minimalist data extraction pipeline. Upload a PDF to automatically extract Order IDs and AWB numbers.</p>
+
+        <form id="uploadForm">
+            <div class="drop-zone" id="dropZone">
+                <span style="color: var(--text-secondary); font-size: 14px;">Click or drag PDF here</span>
+                <input type="file" id="pdfInput" class="file-input" accept="application/pdf" required>
+                <span class="file-name-display" id="fileName"></span>
+            </div>
+            
+            <button type="submit" class="btn" id="processBtn" disabled>Process PDF</button>
+        </form>
+
+        <div class="status-area" id="statusArea"></div>
+
+        <div id="downloadSection" style="display: none; margin-top: 20px;">
+            <div style="height: 1px; background-color: var(--border); margin: 20px 0;"></div>
+            <a href="/api/export/excel/download" class="btn" id="downloadExcelBtn">Download Excel</a>
+            <a href="/api/export/csv/download" class="btn btn-outline" id="downloadCsvBtn">Download CSV</a>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const pdfInput = document.getElementById('pdfInput');
+        const fileNameDisplay = document.getElementById('fileName');
+        const processBtn = document.getElementById('processBtn');
+        const uploadForm = document.getElementById('uploadForm');
+        const statusArea = document.getElementById('statusArea');
+        const downloadSection = document.getElementById('downloadSection');
+
+        // Handle click on drop zone
+        dropZone.addEventListener('click', () => pdfInput.click());
+
+        // Handle file selection
+        pdfInput.addEventListener('change', () => {
+            if (pdfInput.files.length > 0) {
+                fileNameDisplay.textContent = pdfInput.files[0].name;
+                processBtn.disabled = false;
+            }
+        });
+
+        // Drag and drop events
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            
+            if (e.dataTransfer.files.length > 0) {
+                pdfInput.files = e.dataTransfer.files;
+                fileNameDisplay.textContent = pdfInput.files[0].name;
+                processBtn.disabled = false;
+            }
+        });
+
+        // Handle form submission
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (pdfInput.files.length === 0) return;
+
+            const file = pdfInput.files[0];
+            const formData = new FormData();
+            formData.append("file", file);
+
+            processBtn.disabled = true;
+            processBtn.innerHTML = '<span class="loader"></span> Processing...';
+            statusArea.style.display = 'block';
+            statusArea.innerHTML = "Uploading and parsing PDF...";
+            downloadSection.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/upload_and_extract', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    statusArea.innerHTML = `<span style="color: #fff;">Success.</span> Processed ${data.total_pages} pages in background.`;
+                    processBtn.innerHTML = 'Process PDF';
+                    processBtn.disabled = false;
+                    
+                    // Show download buttons
+                    downloadSection.style.display = 'block';
+                } else {
+                    statusArea.innerHTML = `<span style="color: #ff5555;">Error:</span> ${data.detail || 'Unknown error occurred'}`;
+                    processBtn.innerHTML = 'Process PDF';
+                    processBtn.disabled = false;
+                }
+            } catch (err) {
+                statusArea.innerHTML = `<span style="color: #ff5555;">Error:</span> Connection failed.`;
+                processBtn.innerHTML = 'Process PDF';
+                processBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

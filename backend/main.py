@@ -65,6 +65,52 @@ def start_extraction(payload: ExtractionRunRequest, background_tasks: Background
     )
     return {"message": "Extraction started in background", "total_pages": total_pages}
 
+from fastapi.responses import FileResponse, HTMLResponse
+from fastapi import File, UploadFile
+import shutil
+
+@app.get("/")
+def serve_ui():
+    return FileResponse("frontend/index.html")
+
+@app.post("/api/upload_and_extract")
+def upload_and_extract(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    try:
+        # Save the uploaded file
+        os.makedirs("./data/input", exist_ok=True)
+        file_path = f"./data/input/{file.filename}"
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        analysis = PDFReader.analyze_pdf(file_path)
+            
+        total_pages = analysis["page_count"]
+        
+        # Init project in DB
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO projects (project_name, pdf_filename, pdf_size, page_count, processing_status, processed_pages, last_checkpoint)
+                VALUES (?, ?, ?, ?, 'INITIALIZED', 0, 0)
+            """, (file.filename, file_path, analysis["file_size"], analysis["page_count"]))
+            project_id = cursor.lastrowid
+            conn.commit()
+
+        BatchProcessor.process_pdf_in_batches(
+            project_id=project_id,
+            file_path=file_path,
+            total_pages=total_pages,
+            batch_size=100,
+            max_workers=4
+        )
+        
+        return {"message": "Extraction complete", "total_pages": total_pages}
+    except Exception as e:
+        import traceback
+        err_msg = traceback.format_exc()
+        print("ERROR IN UPLOAD:", err_msg)
+        return {"detail": str(e), "traceback": err_msg}, 500
+
 @app.get("/api/export/excel")
 def export_excel(status: str = "All"):
     path = "./data/output/extracted_orders.xlsx"
@@ -72,7 +118,16 @@ def export_excel(status: str = "All"):
         generate_excel_export(path, status_filter=status)
         return {"message": "Excel export generated successfully", "path": path}
     except PermissionError:
-        raise HTTPException(status_code=400, detail="Permission Denied. Please close the Excel file 'extracted_orders.xlsx' if it is open in another program, and try again.")
+        raise HTTPException(status_code=400, detail="Permission Denied. Please close the Excel file if it is open.")
+
+@app.get("/api/export/excel/download")
+def download_excel(status: str = "All"):
+    path = "./data/output/extracted_orders.xlsx"
+    try:
+        generate_excel_export(path, status_filter=status)
+        return FileResponse(path, filename="extracted_orders.xlsx")
+    except PermissionError:
+        raise HTTPException(status_code=400, detail="Permission Denied. Please close the Excel file if it is open.")
 
 @app.get("/api/export/csv")
 def export_csv(status: str = "All"):
@@ -81,4 +136,13 @@ def export_csv(status: str = "All"):
         generate_csv_export(path, status_filter=status)
         return {"message": "CSV export generated successfully", "path": path}
     except PermissionError:
-        raise HTTPException(status_code=400, detail="Permission Denied. Please close the CSV file if it is open, and try again.")
+        raise HTTPException(status_code=400, detail="Permission Denied. Please close the CSV file if it is open.")
+
+@app.get("/api/export/csv/download")
+def download_csv(status: str = "All"):
+    path = "./data/output/extracted_orders.csv"
+    try:
+        generate_csv_export(path, status_filter=status)
+        return FileResponse(path, filename="extracted_orders.csv")
+    except PermissionError:
+        raise HTTPException(status_code=400, detail="Permission Denied. Please close the CSV file if it is open.")

@@ -13,3 +13,14 @@
 2026-08-18 17:27:25,491 - PDFExtractor - INFO - PDF analyzed successfully: C:\Users\arsha\Downloads\bulk_test_orders_1.pdf, Pages: 20
 2026-08-18 17:29:07,117 - PDFExtractor - INFO - PDF analyzed successfully: C:\Users\arsha\Downloads\bulk_test_orders_1.pdf, Pages: 20
 2026-08-18 17:29:51,888 - PDFExtractor - INFO - PDF analyzed successfully: C:\Users\arsha\Downloads\bulk_test_orders_1.pdf, Pages: 20
+2026-08-18 17:35:25,496 - PDFExtractor - INFO - PDF analyzed successfully: C:\Users\arsha\Downloads\bulk_test_orders_1.pdf, Pages: 20
+2026-08-18 17:35:35,591 - PDFExtractor - INFO - PDF analyzed successfully: C:\Users\arsha\Downloads\bulk_test_orders_1.pdf, Pages: 20
+2026-08-18 18:31:10,131 - PDFExtractor - INFO - PDF analyzed successfully: ./data/input/bulk_test_orders_1.pdf, Pages: 20
+2026-08-18 18:31:13,300 - PDFExtractor - INFO - PDF analyzed successfully: ./data/input/bulk_test_orders_1.pdf, Pages: 20
+2026-08-18 18:41:14,005 - PDFExtractor - INFO - PDF analyzed successfully: ./data/input/bulk_test_orders_1.pdf, Pages: 20
+2026-08-18 18:45:52,698 - PDFExtractor - INFO - PDF analyzed successfully: ./data/input/bulk_test_orders_1.pdf, Pages: 20
+2026-08-18 18:46:39,038 - PDFExtractor - INFO - PDF analyzed successfully: ./data/input/bulk_test_orders_1.pdf, Pages: 20
+2026-08-18 18:48:23,190 - PDFExtractor - INFO - PDF analyzed successfully: ./data/input/test.pdf, Pages: 1
+2026-08-18 18:48:23,237 - PDFExtractor - INFO - Direct text extraction empty on page 0. Triggering OCR fallback.
+2026-08-18 18:48:25,814 - PDFExtractor - ERROR - OCR execution failed on page 0 of ./data/input/test.pdf: tesseract is not installed or it's not in your PATH. See README file for more information.
+2026-08-18 18:49:46,867 - PDFExtractor - INFO - PDF analyzed successfully: ./data/input/bulk_test_orders_1.pdf, Pages: 20
