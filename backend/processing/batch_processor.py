@@ -19,6 +19,10 @@ class BatchProcessor:
         # Save to database
         with get_db_connection() as conn:
             cursor = conn.cursor()
+            
+            # Clear previous orders so new PDF doesn't mix with old data
+            cursor.execute("DELETE FROM orders")
+            
             for r in results:
                 cursor.execute("""
                     INSERT INTO orders (
