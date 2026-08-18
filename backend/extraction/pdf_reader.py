@@ -27,20 +27,15 @@ class PDFReader:
     def extract_page_text(file_path: str, page_num: int) -> str:
         """Extracts plain text layer from a specific page of a PDF."""
         try:
-            doc = fitz.open(file_path)
-            if page_num < 0 or page_num >= len(doc):
-                doc.close()
-                return ""
+            import pdfplumber
+            with pdfplumber.open(file_path) as pdf:
+                if page_num < 0 or page_num >= len(pdf.pages):
+                    return ""
                 
-            page = doc[page_num]
-            # Use "words" instead of "text" to avoid words squishing together when spaces are missing in PDF
-            words = page.get_text("words")
-            if words:
-                text = " ".join([w[4] for w in words])
-            else:
-                text = page.get_text("text")
-            doc.close()
-            return text
+                page = pdf.pages[page_num]
+                # x_tolerance and y_tolerance help in adding spaces where they logically belong
+                text = page.extract_text(x_tolerance=2, y_tolerance=2)
+                return text if text else ""
         except Exception as e:
-            logger.error(f"Error extracting text from page {page_num} of {file_path}: {str(e)}")
+            logger.error(f"Error extracting text from page {page_num} of {file_path} with pdfplumber: {str(e)}")
             return ""

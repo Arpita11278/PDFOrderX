@@ -6,3 +6,4 @@ pymupdf
 python-multipart
 pytesseract
 Pillow
+pdfplumber
